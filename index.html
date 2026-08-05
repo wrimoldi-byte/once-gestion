@@ -10,7 +10,7 @@
   </style>
 </head>
 <body>
-  <iframe id="app" src="version-2.html?v=f9b3b8" title="Après Studio — Sistema de gestión"></iframe>
+  <iframe id="app" src="version-2.html?v=supabase-1" title="Après Studio — Sistema de gestión"></iframe>
   <script>
     const frame=document.getElementById('app');
     frame.addEventListener('load',()=>{
@@ -21,14 +21,104 @@
         const subtitle=doc.querySelector('.top h1 + div');
         if(heading) heading.textContent='Après Studio';
         if(subtitle) subtitle.textContent='Sistema de gestión';
+
         const style=doc.createElement('style');
         style.textContent=`
           body{background:linear-gradient(135deg,#eee9e4,#f8f5f2 52%,#ece7e2)!important}
           .top h1{letter-spacing:-.7px;margin-bottom:4px}
           .top h1+div{color:#6b6865!important;font-size:15px}
+          #syncStatus{font-size:12px;padding:6px 10px;border-radius:999px;background:#fff;border:1px solid #ddd;color:#555}
         `;
         doc.head.appendChild(style);
-      }catch(e){console.warn('No se pudo personalizar la vista',e)}
+
+        const status=doc.createElement('span');
+        status.id='syncStatus';
+        status.textContent='Conectando…';
+        const top=doc.querySelector('.top');
+        if(top) top.appendChild(status);
+
+        const bridge=doc.createElement('script');
+        bridge.textContent=`
+          (()=>{
+            const SB_URL='https://rnjrblclthomnsvlbfhm.supabase.co';
+            const SB_KEY='sb_publishable_npLQFSEwCZMr8mwVA_6tQA_CN-7uDhq';
+            const ROW_ID='apres';
+            const status=()=>document.getElementById('syncStatus');
+            const headers={
+              apikey:SB_KEY,
+              Authorization:'Bearer '+SB_KEY,
+              'Content-Type':'application/json'
+            };
+            let saveTimer=null;
+            let loading=false;
+
+            function setStatus(text,ok=true){
+              const el=status();
+              if(!el)return;
+              el.textContent=text;
+              el.style.color=ok?'#166534':'#991b1b';
+            }
+
+            async function upload(){
+              try{
+                setStatus('Guardando…');
+                const r=await fetch(SB_URL+'/rest/v1/app_state?id=eq.'+encodeURIComponent(ROW_ID),{
+                  method:'PATCH',
+                  headers:{...headers,Prefer:'return=minimal'},
+                  body:JSON.stringify({data,updated_at:new Date().toISOString()})
+                });
+                if(!r.ok)throw new Error(await r.text());
+                setStatus('Guardado online');
+              }catch(e){
+                console.error(e);
+                setStatus('Sin conexión',false);
+              }
+            }
+
+            async function download(){
+              if(loading)return;
+              loading=true;
+              try{
+                setStatus('Sincronizando…');
+                const r=await fetch(SB_URL+'/rest/v1/app_state?select=data&id=eq.'+encodeURIComponent(ROW_ID),{headers});
+                if(!r.ok)throw new Error(await r.text());
+                const rows=await r.json();
+                const remote=rows?.[0]?.data;
+                if(remote && Array.isArray(remote.products)){
+                  data={...D,...remote,cash:{...D.cash,...(remote.cash||{})}};
+                  localStorage.setItem(K,JSON.stringify(data));
+                  render();
+                  renderCart();
+                  setStatus('Sincronizado');
+                }else{
+                  await upload();
+                }
+              }catch(e){
+                console.error(e);
+                setStatus('Modo local',false);
+              }finally{
+                loading=false;
+              }
+            }
+
+            save=function(){
+              localStorage.setItem(K,JSON.stringify(data));
+              render();
+              clearTimeout(saveTimer);
+              saveTimer=setTimeout(upload,350);
+            };
+
+            document.addEventListener('visibilitychange',()=>{
+              if(document.visibilityState==='visible')download();
+            });
+            window.addEventListener('focus',download);
+            download();
+          })();
+        `;
+        doc.body.appendChild(bridge);
+      }catch(e){
+        console.warn('No se pudo inicializar Supabase',e);
+      }
     });
   </script>
 </body>
