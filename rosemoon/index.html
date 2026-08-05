@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rosemoon — Sistema de gestión</title>
+<style>
+:root{--brand:#1a1a1a;--muted:#68635f;--line:rgba(0,0,0,.09);--paper:rgba(255,255,255,.88)}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:linear-gradient(135deg,#f3e9ec,#fbf7f8 52%,#eee5e8);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--brand)}
+#loading{min-height:70vh;display:flex;align-items:center;justify-content:center;font-weight:700;color:#6b6265}.app-frame{width:100%;height:78vh;min-height:650px;border:0;display:none;background:#f5f2ef}
+.guide{max-width:1240px;margin:0 auto;padding:26px 18px 48px}.guide-card{background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 14px 30px rgba(0,0,0,.05)}
+.guide h2{margin:0 0 8px;font-size:28px}.guide-intro{margin:0 0 20px;color:var(--muted)}.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.step{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px}.step-number{display:inline-flex;width:30px;height:30px;border-radius:50%;align-items:center;justify-content:center;background:var(--brand);color:#fff;font-weight:800;margin-bottom:10px}.step h3{margin:0 0 7px;font-size:16px}.step p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}.tip{margin-top:16px;padding:14px 16px;border-radius:14px;background:#f4e9ed;color:#51484c;font-size:14px;line-height:1.45}
+@media(max-width:850px){.steps{grid-template-columns:1fr 1fr}.app-frame{height:72vh;min-height:600px}}@media(max-width:560px){.steps{grid-template-columns:1fr}.guide h2{font-size:24px}.app-frame{height:75vh;min-height:560px}}
+</style>
+</head>
+<body>
+<div id="loading">Cargando Rosemoon…</div>
+<iframe id="app" class="app-frame" title="Rosemoon — Sistema de gestión"></iframe>
+<section class="guide">
+ <div class="guide-card">
+  <h2>Cómo usar el sistema</h2><p class="guide-intro">Este es el orden recomendado para trabajar durante el día.</p>
+  <div class="steps">
+   <article class="step"><span class="step-number">1</span><h3>Cargar productos</h3><p>Entrá en <b>Productos</b> y registrá cada prenda con código, descripción, precio, colores, talles, foto y stock.</p></article>
+   <article class="step"><span class="step-number">2</span><h3>Abrir la caja</h3><p>En <b>Caja</b>, ingresá el dinero inicial y presioná <b>Abrir / actualizar caja</b>.</p></article>
+   <article class="step"><span class="step-number">3</span><h3>Registrar ventas</h3><p>En <b>Nueva venta</b>, buscá el producto, elegí color, talle y cantidad, y seleccioná la forma de pago.</p></article>
+   <article class="step"><span class="step-number">4</span><h3>Controlar y cerrar</h3><p>Revisá <b>Panel</b> e <b>Historial</b>. Cargá gastos, contá el efectivo y cerrá la caja.</p></article>
+  </div>
+  <div class="tip"><b>Rosemoon es independiente:</b> sus productos, ventas, caja y gastos no se mezclan con los de Après Studio.</div>
+ </div>
+</section>
+<script>
+const frame=document.getElementById('app'),loading=document.getElementById('loading');
+const decorate=()=>{
+ const doc=frame.contentDocument;if(!doc)return;
+ const style=doc.createElement('style');style.textContent=`
+ .tab-help{background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(247,236,240,.92));border:1px solid rgba(0,0,0,.08);border-left:5px solid #1a1a1a;border-radius:16px;padding:14px 16px;margin-bottom:16px}.tab-help h3{margin:0 0 5px;font-size:16px}.tab-help p{margin:0;color:#625d59;font-size:14px;line-height:1.48}
+ .export-box{background:rgba(255,255,255,.86);border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:15px 16px;margin:0 0 16px}.export-actions{display:flex;gap:8px;flex-wrap:wrap}.export-box h3{margin:0 0 5px;font-size:16px}.export-box small{display:block;margin-bottom:10px}`;doc.head.appendChild(style);
+ const help={venta:['Nueva venta','Verificá que la caja esté abierta. Buscá la prenda por código, elegí color, talle y cantidad, agregala y confirmá el medio de pago.'],panel:['Panel del día','Resume las ventas, el efectivo y las transferencias confirmadas de la fecha seleccionada.'],productos:['Productos y stock','Registrá cada prenda con un código único. En el catálogo podés revisar y editar sus datos y stock.'],historial:['Historial de ventas','Consultá las ventas y confirmá las transferencias pendientes cuando el dinero haya ingresado.'],caja:['Caja diaria','Abrí la caja con el efectivo inicial, registrá gastos y al final ingresá el efectivo contado para cerrar.']};
+ Object.entries(help).forEach(([id,t])=>{const s=doc.getElementById(id);if(!s)return;const b=doc.createElement('div');b.className='tab-help';b.innerHTML=`<h3>${t[0]}</h3><p>${t[1]}</p>`;s.prepend(b)});
+ const box=doc.createElement('div');box.className='export-box';box.innerHTML='<h3>Descargar datos para Excel</h3><small>Archivos CSV compatibles con Excel.</small><div class="export-actions"><button class="btn ghost" id="exportProducts">Productos</button><button class="btn ghost" id="exportDaySales">Ventas del día</button><button class="btn primary" id="exportAllSales">Ventas acumuladas</button></div>';doc.querySelector('.tabs')?.insertAdjacentElement('afterend',box);
+ const script=doc.createElement('script');script.textContent=`(()=>{const safe=v=>{let t=v==null?'':String(v);if(/^[=+\\-@]/.test(t))t="'"+t;return '"'+t.replaceAll('"','""')+'"'};const dl=(name,h,r)=>{const c='\\uFEFF'+[h,...r].map(x=>x.map(safe).join(';')).join('\\r\\n'),u=URL.createObjectURL(new Blob([c],{type:'text/csv;charset=utf-8;'})),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};const d=i=>localDate(new Date(i));const sr=s=>{const out=[];s.forEach(v=>(v.items||[]).forEach(i=>out.push([v.id,new Date(v.date).toLocaleString('es-AR'),d(v.date),v.customer||'Consumidor final',v.payment||'',v.paymentStatus||'',v.total||0,i.code||'',i.name||'',i.color||'',i.size||'',i.qty||0,i.price||0,(i.qty||0)*(i.price||0)])));return out};document.getElementById('exportProducts').onclick=()=>dl('productos-rosemoon-'+today()+'.csv',['Código','Producto','Precio','Stock','Colores','Talles','Tiene foto'],(data.products||[]).map(p=>[p.code,p.name,p.price,p.stock,(p.colors||[]).join(', '),(p.sizes||[]).join(', '),p.photo?'Sí':'No']));document.getElementById('exportDaySales').onclick=()=>{const date=document.getElementById('reportDate').value||today(),s=(data.sales||[]).filter(x=>d(x.date)===date);if(!s.length)return alert('No hay ventas para la fecha seleccionada.');dl('ventas-rosemoon-'+date+'.csv',['ID venta','Fecha y hora','Fecha','Cliente','Pago','Estado','Total venta','Código','Producto','Color','Talle','Cantidad','Precio unitario','Subtotal'],sr(s))};document.getElementById('exportAllSales').onclick=()=>{const s=[...(data.sales||[])].sort((a,b)=>new Date(a.date)-new Date(b.date));if(!s.length)return alert('Todavía no hay ventas acumuladas.');dl('ventas-acumuladas-rosemoon-'+today()+'.csv',['ID venta','Fecha y hora','Fecha','Cliente','Pago','Estado','Total venta','Código','Producto','Color','Talle','Cantidad','Precio unitario','Subtotal'],sr(s))}})();`;doc.body.appendChild(script);
+};
+(async()=>{
+ try{
+  let html=await fetch('../version-4.html?v=rosemoon-1').then(r=>{if(!r.ok)throw new Error('No se pudo cargar la base');return r.text()});
+  html=html.replaceAll('Après Studio BA — Gestión','Rosemoon — Gestión').replaceAll('Après Studio','Rosemoon').replace('<div class="logo">Après</div>','<div class="logo">Rose</div>').replace("const K='onceGestionDataV2'","const K='rosemoonGestionDataV1'").replace("const ROW_ID='apres'","const ROW_ID='rosemoon'");
+  html=html.replace("const D={products:[{code:'206',name:'Vestido batik',price:18500,colors:['Negro','Blanco','Azul'],sizes:['S','M','L','XL'],stock:36,photo:''},{code:'310',name:'Set sastrero',price:32000,colors:['Gris','Negro','Verde'],sizes:['S','M','L','XL','XXL'],stock:45,photo:''},{code:'415',name:'Campera pelo corto',price:29000,colors:['Negro','Beige'],sizes:['S','M','L','XL','XXXL'],stock:27,photo:''}]","const D={products:[]");
+  html=html.replace("SB_URL+'/rest/v1/app_state?id=eq.'+encodeURIComponent(ROW_ID)","SB_URL+'/rest/v1/app_state?on_conflict=id'").replace("method:'PATCH'","method:'POST'").replace("Prefer:'return=minimal'","Prefer:'resolution=merge-duplicates,return=minimal'").replace("JSON.stringify({data,updated_at:","JSON.stringify({id:ROW_ID,data,updated_at:");
+  frame.srcdoc=html;frame.onload=()=>{loading.style.display='none';frame.style.display='block';decorate()};
+ }catch(e){loading.textContent='No se pudo cargar Rosemoon. Actualizá la página.';console.error(e)}
+})();
+</script>
+</body>
+</html>
