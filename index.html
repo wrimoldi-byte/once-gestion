@@ -1,126 +1,35 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Once Gestión — Prototipo</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Après Studio — Sistema de gestión</title>
   <style>
-    :root { --bg:#f6f7fb; --card:#fff; --ink:#171821; --muted:#6d7280; --accent:#5b45ff; --accent2:#efeaff; --danger:#d33; --ok:#15803d; --line:#e6e7ec; }
-    *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
-    button,input,select{font:inherit} button{cursor:pointer}
-    .app{min-height:100vh;display:grid;grid-template-columns:230px 1fr}
-    aside{background:#16151d;color:white;padding:24px 16px;position:sticky;top:0;height:100vh}
-    .brand{font-weight:800;font-size:21px;margin:0 8px 28px}.brand small{display:block;color:#aaa7ba;font-size:12px;font-weight:500;margin-top:4px}
-    nav button{width:100%;border:0;background:transparent;color:#c9c7d2;text-align:left;padding:12px 14px;border-radius:10px;margin:4px 0}
-    nav button.active,nav button:hover{background:#2a2834;color:white}
-    main{padding:24px;max-width:1400px;width:100%;margin:auto}
-    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:16px}
-    h1{margin:0;font-size:28px} .sub{color:var(--muted);margin-top:4px}
-    .pill{background:white;border:1px solid var(--line);padding:9px 12px;border-radius:99px;font-size:13px}
-    .grid{display:grid;gap:16px}.grid.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.grid.two{grid-template-columns:1.3fr .7fr}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 8px 30px rgba(20,20,35,.04)}
-    .kpi .label{color:var(--muted);font-size:13px}.kpi .value{font-size:26px;font-weight:800;margin-top:7px}.kpi .hint{font-size:12px;color:var(--muted);margin-top:6px}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:6px}.field label{font-size:12px;color:var(--muted);font-weight:700}
-    input,select{border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:white;min-width:120px}.code{font-size:28px;font-weight:800;width:180px;letter-spacing:1px}
-    .btn{border:0;border-radius:10px;padding:11px 15px;font-weight:700}.primary{background:var(--accent);color:white}.soft{background:var(--accent2);color:var(--accent)}.ghost{background:white;border:1px solid var(--line)}.danger{background:#fee2e2;color:#b91c1c}
-    table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);font-size:14px}th{color:var(--muted);font-size:12px;text-transform:uppercase}
-    .tag{display:inline-block;padding:4px 8px;border-radius:99px;font-size:12px;background:#f0f1f5}.cash{background:#dcfce7;color:#166534}.transfer{background:#dbeafe;color:#1e40af}
-    .total-box{display:flex;justify-content:space-between;font-size:22px;font-weight:800;padding-top:16px}.empty{padding:30px;text-align:center;color:var(--muted)}
-    .product-found{display:none;margin-top:14px;padding:14px;border-radius:12px;background:#fafaff;border:1px solid #ddd7ff}.product-found.show{display:block}
-    .bar{height:9px;background:#ececf2;border-radius:99px;overflow:hidden}.bar span{height:100%;background:var(--accent);display:block}
-    .section{display:none}.section.active{display:block}.notice{background:#fff8db;border:1px solid #f4dc84;padding:12px 14px;border-radius:12px;color:#6b5200;font-size:13px;margin-bottom:16px}
-    .login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#171520,#4033aa);display:flex;align-items:center;justify-content:center;z-index:20;padding:20px}.login-card{background:white;width:min(420px,100%);padding:28px;border-radius:20px}.login-card h2{margin-top:0}.login-card input,.login-card select{width:100%}.login-card .field{margin-bottom:14px}
-    @media(max-width:900px){.app{grid-template-columns:1fr}aside{height:auto;position:static;padding:12px}.brand{margin:0 8px 12px}nav{display:flex;overflow:auto}nav button{white-space:nowrap;width:auto}.grid.kpis,.grid.two{grid-template-columns:1fr 1fr}main{padding:15px}}
-    @media(max-width:560px){.grid.kpis,.grid.two{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}.code{width:100%}.field{width:100%}.field input,.field select{width:100%}}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f5f2ef}
+    iframe{display:block;width:100%;height:100%;border:0;background:#f5f2ef}
   </style>
 </head>
 <body>
-<div class="login-overlay" id="loginOverlay">
-  <div class="login-card">
-    <h2>Once Gestión</h2><p class="sub">Prototipo para ventas mayoristas</p>
-    <div class="field"><label>Nombre</label><input id="loginName" value="Walter" /></div>
-    <div class="field"><label>Perfil</label><select id="loginRole"><option value="vendedor">Vendedor</option><option value="admin">Administradora</option></select></div>
-    <button class="btn primary" style="width:100%" onclick="login()">Entrar</button>
-    <p class="sub" style="font-size:12px;margin-bottom:0">Los datos se guardan solo en este navegador para esta prueba.</p>
-  </div>
-</div>
-<div class="app">
-  <aside><div class="brand">Once Gestión<small>Mayorista de indumentaria</small></div>
-    <nav>
-      <button class="active" data-section="venta">🛍️ Nueva venta</button>
-      <button data-section="panel">📊 Panel</button>
-      <button data-section="productos">👕 Productos</button>
-      <button data-section="historial">🧾 Historial</button>
-      <button data-section="caja">💵 Caja</button>
-    </nav>
-  </aside>
-  <main>
-    <header><div><h1 id="pageTitle">Nueva venta</h1><div class="sub" id="today"></div></div><div class="row"><span class="pill" id="userPill"></span><span class="pill" id="cashStatus">Caja cerrada</span></div></header>
-
-    <section id="venta" class="section active">
-      <div class="notice">Probá con los códigos <b>206</b>, <b>310</b> o <b>415</b>. Podés crear otros desde Productos.</div>
-      <div class="grid two">
-        <div class="card">
-          <h3 style="margin-top:0">Agregar producto</h3>
-          <div class="row"><div class="field"><label>Código</label><input class="code" id="saleCode" inputmode="numeric" placeholder="206" oninput="findProduct()"></div><button class="btn soft" onclick="findProduct()">Buscar</button></div>
-          <div id="productFound" class="product-found">
-            <div class="row" style="justify-content:space-between"><div><b id="foundName"></b><div class="sub" id="foundPrice"></div></div><span class="tag" id="foundStock"></span></div>
-            <div class="row" style="margin-top:12px"><div class="field"><label>Color</label><select id="saleColor"></select></div><div class="field"><label>Talle</label><select id="saleSize"></select></div><div class="field"><label>Cantidad</label><input id="saleQty" type="number" min="1" value="1" style="width:90px"></div><button class="btn primary" style="align-self:end" onclick="addItem()">Agregar</button></div>
-          </div>
-          <h3>Detalle</h3><div style="overflow:auto"><table><thead><tr><th>Código</th><th>Prenda</th><th>Variante</th><th>Cant.</th><th>Subtotal</th><th></th></tr></thead><tbody id="cartBody"></tbody></table></div>
-          <div id="cartEmpty" class="empty">Todavía no agregaste prendas.</div>
-        </div>
-        <div class="card">
-          <h3 style="margin-top:0">Cobro</h3>
-          <div class="field"><label>Cliente (opcional)</label><input id="customer" placeholder="Nombre o local"></div><br>
-          <div class="field"><label>Forma de pago</label><select id="payment"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option></select></div>
-          <div class="total-box"><span>Total</span><span id="cartTotal">$0</span></div>
-          <button class="btn primary" style="width:100%;margin-top:18px" onclick="completeSale()">Confirmar venta</button>
-          <button class="btn ghost" style="width:100%;margin-top:8px" onclick="clearCart()">Vaciar</button>
-        </div>
-      </div>
-    </section>
-
-    <section id="panel" class="section">
-      <div class="grid kpis"><div class="card kpi"><div class="label">Ventas de hoy</div><div class="value" id="kpiSales">0</div><div class="hint">Operaciones confirmadas</div></div><div class="card kpi"><div class="label">Total vendido</div><div class="value" id="kpiTotal">$0</div><div class="hint">Efectivo + transferencias</div></div><div class="card kpi"><div class="label">Efectivo</div><div class="value" id="kpiCash">$0</div><div class="hint">Más inicio de caja</div></div><div class="card kpi"><div class="label">Transferencias</div><div class="value" id="kpiTransfer">$0</div><div class="hint">Ventas bancarizadas</div></div></div>
-      <div class="grid two" style="margin-top:16px"><div class="card"><h3>Últimas ventas</h3><div style="overflow:auto"><table><thead><tr><th>Hora</th><th>Cliente</th><th>Pago</th><th>Total</th></tr></thead><tbody id="latestSales"></tbody></table></div></div><div class="card"><h3>Más vendidos</h3><div id="topProducts"></div></div></div>
-    </section>
-
-    <section id="productos" class="section">
-      <div class="grid two"><div class="card"><h3 style="margin-top:0">Nuevo producto</h3><div class="field"><label>Código</label><input id="pCode" placeholder="Ej. 520"></div><br><div class="field"><label>Descripción</label><input id="pName" placeholder="Ej. Remera oversize"></div><br><div class="field"><label>Precio</label><input id="pPrice" type="number" placeholder="18500"></div><br><div class="field"><label>Colores, separados por coma</label><input id="pColors" placeholder="Negro, Blanco"></div><br><div class="field"><label>Talles, separados por coma</label><input id="pSizes" placeholder="S, M, L, XL"></div><br><div class="field"><label>Stock inicial por variante</label><input id="pStock" type="number" value="10"></div><br><button class="btn primary" onclick="createProduct()">Guardar producto</button></div><div class="card"><h3 style="margin-top:0">Catálogo</h3><div style="overflow:auto"><table><thead><tr><th>Código</th><th>Prenda</th><th>Precio</th><th>Stock</th></tr></thead><tbody id="productsBody"></tbody></table></div></div></div>
-    </section>
-
-    <section id="historial" class="section"><div class="card"><div class="row" style="justify-content:space-between"><h3>Historial de ventas</h3><button class="btn ghost" onclick="exportCSV()">Exportar CSV</button></div><div style="overflow:auto"><table><thead><tr><th>Fecha</th><th>Vendedor</th><th>Cliente</th><th>Detalle</th><th>Pago</th><th>Total</th></tr></thead><tbody id="historyBody"></tbody></table></div></div></section>
-
-    <section id="caja" class="section"><div class="grid two"><div class="card"><h3 style="margin-top:0">Caja diaria</h3><div class="field"><label>Inicio de caja</label><input id="openingCash" type="number" placeholder="0"></div><br><button class="btn primary" onclick="openCash()">Abrir / actualizar caja</button><button class="btn danger" style="margin-left:6px" onclick="closeCash()">Cerrar caja</button></div><div class="card"><h3 style="margin-top:0">Resumen</h3><p>Inicio: <b id="sumOpening">$0</b></p><p>Ventas en efectivo: <b id="sumCashSales">$0</b></p><p>Transferencias: <b id="sumTransfers">$0</b></p><hr style="border:0;border-top:1px solid var(--line)"><p style="font-size:20px">Efectivo esperado: <b id="sumExpected">$0</b></p></div></div></section>
-  </main>
-</div>
-<script>
-const key='onceGestionDataV1';
-const defaults={products:[
- {code:'206',name:'Remera básica',price:18500,colors:['Negro','Blanco','Azul'],sizes:['S','M','L','XL'],stock:36},
- {code:'310',name:'Pantalón cargo',price:32000,colors:['Negro','Beige','Verde'],sizes:['36','38','40','42','44'],stock:45},
- {code:'415',name:'Buzo oversize',price:29000,colors:['Negro','Gris','Rosa'],sizes:['1','2','3'],stock:27}
-],sales:[],cash:{date:'',opening:0,isOpen:false},user:null};
-let data=load(),cart=[],selected=null;
-function load(){try{return {...structuredClone(defaults),...JSON.parse(localStorage.getItem(key)||'{}')}}catch{return structuredClone(defaults)}}
-function save(){localStorage.setItem(key,JSON.stringify(data));renderAll();channel?.postMessage('update')}
-const channel=typeof BroadcastChannel!=='undefined'?new BroadcastChannel('once-gestion'):null; if(channel)channel.onmessage=()=>{data=load();renderAll()};
-const money=n=>new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0}).format(n||0);
-const todayKey=()=>new Date().toISOString().slice(0,10);
-function login(){data.user={name:document.getElementById('loginName').value||'Usuario',role:document.getElementById('loginRole').value};save();document.getElementById('loginOverlay').style.display='none'}
-function findProduct(){const code=document.getElementById('saleCode').value.trim();selected=data.products.find(p=>p.code===code);const box=document.getElementById('productFound');if(!selected){box.classList.remove('show');return}box.classList.add('show');foundName.textContent=selected.name;foundPrice.textContent=money(selected.price);foundStock.textContent='Stock total: '+selected.stock;saleColor.innerHTML=selected.colors.map(x=>`<option>${x}</option>`).join('');saleSize.innerHTML=selected.sizes.map(x=>`<option>${x}</option>`).join('')}
-function addItem(){if(!selected)return alert('Ingresá un código válido.');const qty=Math.max(1,+saleQty.value||1);if(qty>selected.stock)return alert('No hay stock suficiente.');cart.push({code:selected.code,name:selected.name,price:selected.price,color:saleColor.value,size:saleSize.value,qty});saleCode.value='';saleQty.value=1;selected=null;productFound.classList.remove('show');renderCart();saleCode.focus()}
-function renderCart(){cartBody.innerHTML=cart.map((x,i)=>`<tr><td>${x.code}</td><td>${x.name}</td><td>${x.color} / ${x.size}</td><td>${x.qty}</td><td>${money(x.price*x.qty)}</td><td><button class="btn ghost" onclick="removeItem(${i})">×</button></td></tr>`).join('');cartEmpty.style.display=cart.length?'none':'block';cartTotal.textContent=money(cart.reduce((s,x)=>s+x.price*x.qty,0))}
-function removeItem(i){cart.splice(i,1);renderCart()} function clearCart(){cart=[];renderCart()}
-function completeSale(){if(!cart.length)return alert('Agregá al menos una prenda.');if(!data.cash.isOpen||data.cash.date!==todayKey())return alert('Primero abrí la caja del día.');for(const item of cart){const p=data.products.find(x=>x.code===item.code);if(!p||p.stock<item.qty)return alert('Stock insuficiente para '+item.name)}for(const item of cart)data.products.find(x=>x.code===item.code).stock-=item.qty;const total=cart.reduce((s,x)=>s+x.price*x.qty,0);data.sales.unshift({id:Date.now(),date:new Date().toISOString(),seller:data.user?.name||'Usuario',customer:customer.value||'Consumidor final',payment:payment.value,total,items:structuredClone(cart)});save();clearCart();customer.value='';alert('Venta registrada correctamente.')}
-function createProduct(){const code=pCode.value.trim(),name=pName.value.trim(),price=+pPrice.value,stock=+pStock.value||0;if(!code||!name||!price)return alert('Completá código, descripción y precio.');if(data.products.some(p=>p.code===code))return alert('Ese código ya existe.');data.products.push({code,name,price,colors:pColors.value.split(',').map(x=>x.trim()).filter(Boolean),sizes:pSizes.value.split(',').map(x=>x.trim()).filter(Boolean),stock});save();pCode.value=pName.value=pPrice.value=pColors.value=pSizes.value='';pStock.value=10}
-function openCash(){data.cash={date:todayKey(),opening:+openingCash.value||0,isOpen:true};save()} function closeCash(){data.cash.isOpen=false;save()}
-function todaysSales(){return data.sales.filter(s=>s.date.slice(0,10)===todayKey())}
-function renderAll(){document.getElementById('today').textContent=new Intl.DateTimeFormat('es-AR',{dateStyle:'full'}).format(new Date());userPill.textContent=data.user?`${data.user.name} · ${data.user.role}`:'Sin sesión';cashStatus.textContent=data.cash.isOpen&&data.cash.date===todayKey()?'Caja abierta':'Caja cerrada';cashStatus.style.color=data.cash.isOpen?'var(--ok)':'var(--danger)';productsBody.innerHTML=data.products.map(p=>`<tr><td><b>${p.code}</b></td><td>${p.name}</td><td>${money(p.price)}</td><td>${p.stock}</td></tr>`).join('');const ts=todaysSales(),cash=ts.filter(s=>s.payment==='efectivo').reduce((a,s)=>a+s.total,0),trans=ts.filter(s=>s.payment==='transferencia').reduce((a,s)=>a+s.total,0);kpiSales.textContent=ts.length;kpiTotal.textContent=money(cash+trans);kpiCash.textContent=money(cash);kpiTransfer.textContent=money(trans);latestSales.innerHTML=ts.slice(0,8).map(s=>`<tr><td>${new Date(s.date).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}</td><td>${s.customer}</td><td><span class="tag ${s.payment==='efectivo'?'cash':'transfer'}">${s.payment}</span></td><td>${money(s.total)}</td></tr>`).join('')||'<tr><td colspan="4">Sin ventas hoy.</td></tr>';historyBody.innerHTML=data.sales.map(s=>`<tr><td>${new Date(s.date).toLocaleString('es-AR')}</td><td>${s.seller}</td><td>${s.customer}</td><td>${s.items.map(i=>`${i.qty}× ${i.code} ${i.color}/${i.size}`).join(', ')}</td><td>${s.payment}</td><td>${money(s.total)}</td></tr>`).join('')||'<tr><td colspan="6">Sin ventas.</td></tr>';const counts={};ts.flatMap(s=>s.items).forEach(i=>counts[i.name]=(counts[i.name]||0)+i.qty);const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);topProducts.innerHTML=sorted.length?sorted.map(([n,q],i)=>`<div style="margin:14px 0"><div class="row" style="justify-content:space-between"><span>${n}</span><b>${q}</b></div><div class="bar"><span style="width:${Math.max(8,q/(sorted[0][1]||1)*100)}%"></span></div></div>`).join(''):'<div class="empty">Todavía no hay datos.</div>';sumOpening.textContent=money(data.cash.date===todayKey()?data.cash.opening:0);sumCashSales.textContent=money(cash);sumTransfers.textContent=money(trans);sumExpected.textContent=money((data.cash.date===todayKey()?data.cash.opening:0)+cash);openingCash.value=data.cash.date===todayKey()?data.cash.opening:'';renderCart()}
-function exportCSV(){const rows=[['Fecha','Vendedor','Cliente','Pago','Total','Detalle'],...data.sales.map(s=>[new Date(s.date).toLocaleString('es-AR'),s.seller,s.customer,s.payment,s.total,s.items.map(i=>`${i.qty}x ${i.code} ${i.color}/${i.size}`).join(' | ')])];const csv=rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='ventas-once.csv';a.click()}
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));document.getElementById(b.dataset.section).classList.add('active');pageTitle.textContent=b.textContent.trim().replace(/^\S+\s/,'')});
-if(data.user)loginOverlay.style.display='none';renderAll();saleCode.addEventListener('keydown',e=>{if(e.key==='Enter'){findProduct();if(selected)addItem()}});
-</script>
+  <iframe id="app" src="version-2.html?v=f9b3b8" title="Après Studio — Sistema de gestión"></iframe>
+  <script>
+    const frame=document.getElementById('app');
+    frame.addEventListener('load',()=>{
+      try{
+        const doc=frame.contentDocument;
+        doc.title='Après Studio — Sistema de gestión';
+        const heading=doc.querySelector('.top h1');
+        const subtitle=doc.querySelector('.top h1 + div');
+        if(heading) heading.textContent='Après Studio';
+        if(subtitle) subtitle.textContent='Sistema de gestión';
+        const style=doc.createElement('style');
+        style.textContent=`
+          body{background:linear-gradient(135deg,#eee9e4,#f8f5f2 52%,#ece7e2)!important}
+          .top h1{letter-spacing:-.7px;margin-bottom:4px}
+          .top h1+div{color:#6b6865!important;font-size:15px}
+        `;
+        doc.head.appendChild(style);
+      }catch(e){console.warn('No se pudo personalizar la vista',e)}
+    });
+  </script>
 </body>
 </html>
