@@ -10,7 +10,7 @@
   </style>
 </head>
 <body>
-  <iframe id="app" src="version-2.html?v=supabase-1" title="Après Studio — Sistema de gestión"></iframe>
+  <iframe id="app" src="version-2.html?v=products-edit-1" title="Après Studio — Sistema de gestión"></iframe>
   <script>
     const frame=document.getElementById('app');
     frame.addEventListener('load',()=>{
@@ -28,6 +28,9 @@
           .top h1{letter-spacing:-.7px;margin-bottom:4px}
           .top h1+div{color:#6b6865!important;font-size:15px}
           #syncStatus{font-size:12px;padding:6px 10px;border-radius:999px;background:#fff;border:1px solid #ddd;color:#555}
+          #productEditBox{margin-top:16px;background:#faf8f6}
+          #productEditBox input[readonly]{background:#eee;color:#666;cursor:not-allowed}
+          .product-actions{white-space:nowrap}
         `;
         doc.head.appendChild(style);
 
@@ -44,81 +47,112 @@
             const SB_KEY='sb_publishable_npLQFSEwCZMr8mwVA_6tQA_CN-7uDhq';
             const ROW_ID='apres';
             const status=()=>document.getElementById('syncStatus');
-            const headers={
-              apikey:SB_KEY,
-              Authorization:'Bearer '+SB_KEY,
-              'Content-Type':'application/json'
-            };
-            let saveTimer=null;
-            let loading=false;
+            const headers={apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'};
+            let saveTimer=null,loading=false,editingCode=null,editingPhoto='';
 
-            function setStatus(text,ok=true){
-              const el=status();
-              if(!el)return;
-              el.textContent=text;
-              el.style.color=ok?'#166534':'#991b1b';
-            }
-
+            function setStatus(text,ok=true){const el=status();if(!el)return;el.textContent=text;el.style.color=ok?'#166534':'#991b1b'}
             async function upload(){
               try{
                 setStatus('Guardando…');
-                const r=await fetch(SB_URL+'/rest/v1/app_state?id=eq.'+encodeURIComponent(ROW_ID),{
-                  method:'PATCH',
-                  headers:{...headers,Prefer:'return=minimal'},
-                  body:JSON.stringify({data,updated_at:new Date().toISOString()})
-                });
-                if(!r.ok)throw new Error(await r.text());
-                setStatus('Guardado online');
-              }catch(e){
-                console.error(e);
-                setStatus('Sin conexión',false);
-              }
+                const r=await fetch(SB_URL+'/rest/v1/app_state?id=eq.'+encodeURIComponent(ROW_ID),{method:'PATCH',headers:{...headers,Prefer:'return=minimal'},body:JSON.stringify({data,updated_at:new Date().toISOString()})});
+                if(!r.ok)throw new Error(await r.text());setStatus('Guardado online');
+              }catch(e){console.error(e);setStatus('Sin conexión',false)}
             }
-
             async function download(){
-              if(loading)return;
-              loading=true;
+              if(loading)return;loading=true;
               try{
                 setStatus('Sincronizando…');
                 const r=await fetch(SB_URL+'/rest/v1/app_state?select=data&id=eq.'+encodeURIComponent(ROW_ID),{headers});
                 if(!r.ok)throw new Error(await r.text());
-                const rows=await r.json();
-                const remote=rows?.[0]?.data;
-                if(remote && Array.isArray(remote.products)){
+                const rows=await r.json(),remote=rows?.[0]?.data;
+                if(remote&&Array.isArray(remote.products)){
                   data={...D,...remote,cash:{...D.cash,...(remote.cash||{})}};
-                  localStorage.setItem(K,JSON.stringify(data));
-                  render();
-                  renderCart();
-                  setStatus('Sincronizado');
-                }else{
-                  await upload();
-                }
-              }catch(e){
-                console.error(e);
-                setStatus('Modo local',false);
-              }finally{
-                loading=false;
+                  localStorage.setItem(K,JSON.stringify(data));render();renderCart();setStatus('Sincronizado');
+                }else await upload();
+              }catch(e){console.error(e);setStatus('Modo local',false)}finally{loading=false}
+            }
+            save=function(){localStorage.setItem(K,JSON.stringify(data));render();clearTimeout(saveTimer);saveTimer=setTimeout(upload,350)};
+
+            function ensureEditor(){
+              if(document.getElementById('productEditBox'))return;
+              const productsBody=document.getElementById('products');
+              if(!productsBody)return;
+              const table=productsBody.closest('table');
+              const headRow=table?.querySelector('thead tr');
+              if(headRow&&!headRow.querySelector('[data-edit-head]')){
+                const th=document.createElement('th');th.dataset.editHead='1';th.textContent='';headRow.appendChild(th);
               }
+              const box=document.createElement('div');box.id='productEditBox';box.className='card hide';
+              box.innerHTML=`+
+                '<h3>Editar producto</h3>'+
+                '<div class="row">'+
+                  '<div class="field"><label>Código (fijo)</label><input id="editCode" readonly></div>'+
+                  '<div class="field" style="flex:1"><label>Descripción</label><input id="editName"></div>'+
+                  '<div class="field"><label>Precio</label><input id="editPrice" type="number" min="0"></div>'+
+                  '<div class="field"><label>Stock</label><input id="editStock" type="number" min="0"></div>'+
+                '</div><br>'+
+                '<div class="field"><label>Colores separados por coma</label><input id="editColors"></div><br>'+
+                '<div class="field"><label>Talles</label><select id="editSizes" multiple size="6"><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>XXXL</option></select></div><br>'+
+                '<div class="field"><label>Cambiar foto</label><input id="editPhotoInput" type="file" accept="image/*"><img id="editPhotoPreview" class="preview hide"></div><br>'+
+                '<div class="row"><button class="btn primary" id="saveProductEdit">Guardar cambios</button><button class="btn ghost" id="cancelProductEdit">Cancelar</button></div>';
+              table.parentElement.appendChild(box);
+              document.getElementById('editPhotoInput').addEventListener('change',e=>{
+                const f=e.target.files[0];if(!f)return;
+                if(f.size>1200000){alert('La foto debe pesar menos de 1,2 MB');e.target.value='';return}
+                const r=new FileReader();r.onload=()=>{editingPhoto=r.result;const img=document.getElementById('editPhotoPreview');img.src=editingPhoto;img.className='preview'};r.readAsDataURL(f);
+              });
+              document.getElementById('cancelProductEdit').onclick=()=>{editingCode=null;editingPhoto='';box.classList.add('hide')};
+              document.getElementById('saveProductEdit').onclick=()=>{
+                const p=data.products.find(x=>x.code===editingCode);if(!p)return alert('No se encontró el producto');
+                const name=document.getElementById('editName').value.trim();
+                const price=+document.getElementById('editPrice').value;
+                const stock=+document.getElementById('editStock').value;
+                const colors=document.getElementById('editColors').value.split(',').map(x=>x.trim()).filter(Boolean);
+                const sizes=[...document.getElementById('editSizes').selectedOptions].map(o=>o.value);
+                if(!name||price<0||stock<0||!colors.length||!sizes.length)return alert('Completá descripción, precio, stock, colores y talles');
+                p.name=name;p.price=price;p.stock=stock;p.colors=colors;p.sizes=sizes;p.photo=editingPhoto||'';
+                save();editingCode=null;editingPhoto='';box.classList.add('hide');alert('Producto actualizado');
+              };
             }
 
-            save=function(){
-              localStorage.setItem(K,JSON.stringify(data));
-              render();
-              clearTimeout(saveTimer);
-              saveTimer=setTimeout(upload,350);
-            };
+            function openEditor(code){
+              ensureEditor();
+              const p=data.products.find(x=>x.code===code);if(!p)return;
+              editingCode=code;editingPhoto=p.photo||'';
+              document.getElementById('editCode').value=p.code;
+              document.getElementById('editName').value=p.name;
+              document.getElementById('editPrice').value=p.price;
+              document.getElementById('editStock').value=p.stock;
+              document.getElementById('editColors').value=(p.colors||[]).join(', ');
+              [...document.getElementById('editSizes').options].forEach(o=>o.selected=(p.sizes||[]).includes(o.value));
+              const img=document.getElementById('editPhotoPreview');
+              if(editingPhoto){img.src=editingPhoto;img.className='preview'}else img.className='preview hide';
+              document.getElementById('editPhotoInput').value='';
+              const box=document.getElementById('productEditBox');box.classList.remove('hide');box.scrollIntoView({behavior:'smooth',block:'center'});
+            }
 
-            document.addEventListener('visibilitychange',()=>{
-              if(document.visibilityState==='visible')download();
-            });
+            function decorateProducts(){
+              ensureEditor();
+              const rows=[...document.querySelectorAll('#products tr')];
+              rows.forEach((tr,i)=>{
+                if(tr.querySelector('.product-actions'))return;
+                const p=data.products[i];if(!p)return;
+                const td=document.createElement('td');td.className='product-actions';
+                const btn=document.createElement('button');btn.className='btn ghost';btn.textContent='Editar';btn.onclick=()=>openEditor(p.code);
+                td.appendChild(btn);tr.appendChild(td);
+              });
+            }
+
+            const originalRender=render;
+            render=function(){originalRender();decorateProducts()};
+            decorateProducts();
+            document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')download()});
             window.addEventListener('focus',download);
             download();
           })();
         `;
         doc.body.appendChild(bridge);
-      }catch(e){
-        console.warn('No se pudo inicializar Supabase',e);
-      }
+      }catch(e){console.warn('No se pudo inicializar Supabase',e)}
     });
   </script>
 </body>
