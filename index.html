@@ -1,145 +1,53 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Après Studio — Sistema de gestión</title>
-  <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f5f2ef}iframe{display:block;width:100%;height:100%;border:0}</style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Après Studio — Sistema de gestión</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f5f2ef}iframe{display:block;width:100%;height:100%;border:0}</style>
 </head>
 <body>
-<iframe id="app" src="version-2.html?v=products-edit-fixed-2" title="Après Studio — Sistema de gestión"></iframe>
+<iframe id="app" src="version-2.html?v=transfer-status-1" title="Après Studio — Sistema de gestión"></iframe>
 <script>
 const frame=document.getElementById('app');
 frame.addEventListener('load',()=>{
-  try{
-    const doc=frame.contentDocument;
-    doc.title='Après Studio — Sistema de gestión';
-    const heading=doc.querySelector('.top h1');
-    const subtitle=doc.querySelector('.top h1 + div');
-    if(heading)heading.textContent='Après Studio';
-    if(subtitle)subtitle.textContent='Sistema de gestión';
-
-    const style=doc.createElement('style');
-    style.textContent=`
-      body{background:linear-gradient(135deg,#eee9e4,#f8f5f2 52%,#ece7e2)!important}
-      .top h1{letter-spacing:-.7px;margin-bottom:4px}
-      .top h1+div{color:#6b6865!important;font-size:15px}
-      #syncStatus{font-size:12px;padding:6px 10px;border-radius:999px;background:#fff;border:1px solid #ddd;color:#555}
-      #productEditBox{margin-top:16px;background:#faf8f6}
-      #productEditBox input[readonly]{background:#eee;color:#666;cursor:not-allowed}
-      .product-actions{white-space:nowrap}
-    `;
-    doc.head.appendChild(style);
-
-    const status=doc.createElement('span');
-    status.id='syncStatus';status.textContent='Conectando…';
-    doc.querySelector('.top')?.appendChild(status);
-
-    const bridge=doc.createElement('script');
-    bridge.textContent=`
-    (()=>{
-      const SB_URL='https://rnjrblclthomnsvlbfhm.supabase.co';
-      const SB_KEY='sb_publishable_npLQFSEwCZMr8mwVA_6tQA_CN-7uDhq';
-      const ROW_ID='apres';
-      const headers={apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'};
-      let saveTimer=null,loading=false,editingCode=null,editingPhoto='';
-      const status=()=>document.getElementById('syncStatus');
-      function setStatus(text,ok=true){const el=status();if(!el)return;el.textContent=text;el.style.color=ok?'#166534':'#991b1b'}
-
-      async function upload(){
-        try{
-          setStatus('Guardando…');
-          const r=await fetch(SB_URL+'/rest/v1/app_state?id=eq.'+encodeURIComponent(ROW_ID),{method:'PATCH',headers:{...headers,Prefer:'return=minimal'},body:JSON.stringify({data,updated_at:new Date().toISOString()})});
-          if(!r.ok)throw new Error(await r.text());setStatus('Guardado online');
-        }catch(e){console.error(e);setStatus('Sin conexión',false)}
-      }
-      async function download(){
-        if(loading)return;loading=true;
-        try{
-          setStatus('Sincronizando…');
-          const r=await fetch(SB_URL+'/rest/v1/app_state?select=data&id=eq.'+encodeURIComponent(ROW_ID),{headers});
-          if(!r.ok)throw new Error(await r.text());
-          const rows=await r.json(),remote=rows?.[0]?.data;
-          if(remote&&Array.isArray(remote.products)){
-            data={...D,...remote,cash:{...D.cash,...(remote.cash||{})}};
-            localStorage.setItem(K,JSON.stringify(data));render();renderCart();setStatus('Sincronizado');
-          }else await upload();
-        }catch(e){console.error(e);setStatus('Modo local',false)}finally{loading=false}
-      }
-      save=function(){localStorage.setItem(K,JSON.stringify(data));render();clearTimeout(saveTimer);saveTimer=setTimeout(upload,350)};
-
-      function ensureEditor(){
-        if(document.getElementById('productEditBox'))return;
-        const body=document.getElementById('products');if(!body)return;
-        const table=body.closest('table');
-        const head=table?.querySelector('thead tr');
-        if(head&&!head.querySelector('[data-edit-head]')){const th=document.createElement('th');th.dataset.editHead='1';head.appendChild(th)}
-        const box=document.createElement('div');box.id='productEditBox';box.className='card hide';
-        box.innerHTML=
-          '<h3>Editar producto</h3>'+
-          '<div class="row">'+
-          '<div class="field"><label>Código (fijo)</label><input id="editCode" readonly></div>'+
-          '<div class="field" style="flex:1"><label>Descripción</label><input id="editName"></div>'+
-          '<div class="field"><label>Precio</label><input id="editPrice" type="number" min="0"></div>'+
-          '<div class="field"><label>Stock</label><input id="editStock" type="number" min="0"></div></div><br>'+
-          '<div class="field"><label>Colores separados por coma</label><input id="editColors"></div><br>'+
-          '<div class="field"><label>Talles</label><select id="editSizes" multiple size="6"><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>XXXL</option></select></div><br>'+
-          '<div class="field"><label>Cambiar foto</label><input id="editPhotoInput" type="file" accept="image/*"><img id="editPhotoPreview" class="preview hide"></div><br>'+
-          '<div class="row"><button class="btn primary" id="saveProductEdit">Guardar cambios</button><button class="btn ghost" id="cancelProductEdit">Cancelar</button></div>';
-        table.parentElement.appendChild(box);
-
-        document.getElementById('editPhotoInput').addEventListener('change',e=>{
-          const f=e.target.files[0];if(!f)return;
-          if(f.size>1200000){alert('La foto debe pesar menos de 1,2 MB');e.target.value='';return}
-          const r=new FileReader();r.onload=()=>{editingPhoto=r.result;const img=document.getElementById('editPhotoPreview');img.src=editingPhoto;img.className='preview'};r.readAsDataURL(f);
-        });
-        document.getElementById('cancelProductEdit').onclick=()=>{editingCode=null;editingPhoto='';box.classList.add('hide')};
-        document.getElementById('saveProductEdit').onclick=()=>{
-          const p=data.products.find(x=>x.code===editingCode);if(!p)return alert('No se encontró el producto');
-          const name=document.getElementById('editName').value.trim();
-          const price=Number(document.getElementById('editPrice').value);
-          const stock=Number(document.getElementById('editStock').value);
-          const colors=document.getElementById('editColors').value.split(',').map(x=>x.trim()).filter(Boolean);
-          const sizes=[...document.getElementById('editSizes').selectedOptions].map(o=>o.value);
-          if(!name||!Number.isFinite(price)||price<0||!Number.isFinite(stock)||stock<0||!colors.length||!sizes.length)return alert('Completá descripción, precio, stock, colores y talles');
-          p.name=name;p.price=price;p.stock=stock;p.colors=colors;p.sizes=sizes;p.photo=editingPhoto;
-          save();editingCode=null;editingPhoto='';box.classList.add('hide');alert('Producto actualizado');
-        };
-      }
-
-      function openEditor(code){
-        ensureEditor();const p=data.products.find(x=>x.code===code);if(!p)return;
-        editingCode=code;editingPhoto=p.photo||'';
-        document.getElementById('editCode').value=p.code;
-        document.getElementById('editName').value=p.name;
-        document.getElementById('editPrice').value=p.price;
-        document.getElementById('editStock').value=p.stock;
-        document.getElementById('editColors').value=(p.colors||[]).join(', ');
-        [...document.getElementById('editSizes').options].forEach(o=>o.selected=(p.sizes||[]).includes(o.value));
-        const img=document.getElementById('editPhotoPreview');if(editingPhoto){img.src=editingPhoto;img.className='preview'}else img.className='preview hide';
-        document.getElementById('editPhotoInput').value='';
-        const box=document.getElementById('productEditBox');box.classList.remove('hide');box.scrollIntoView({behavior:'smooth',block:'center'});
-      }
-
-      function decorateProducts(){
-        ensureEditor();
-        [...document.querySelectorAll('#products tr')].forEach((tr,i)=>{
-          if(tr.querySelector('.product-actions'))return;
-          const p=data.products[i];if(!p)return;
-          const td=document.createElement('td');td.className='product-actions';
-          const btn=document.createElement('button');btn.className='btn ghost';btn.textContent='Editar';btn.onclick=()=>openEditor(p.code);
-          td.appendChild(btn);tr.appendChild(td);
-        });
-      }
-      const originalRender=render;
-      render=function(){originalRender();decorateProducts()};
-      decorateProducts();
-      document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')download()});
-      window.addEventListener('focus',download);
-      download();
-    })();`;
-    doc.body.appendChild(bridge);
-  }catch(e){console.error('No se pudo inicializar la aplicación',e)}
+ try{
+  const doc=frame.contentDocument;
+  doc.title='Après Studio — Sistema de gestión';
+  const heading=doc.querySelector('.top h1');
+  const subtitle=doc.querySelector('.top h1 + div');
+  if(heading)heading.textContent='Après Studio';
+  if(subtitle)subtitle.textContent='Sistema de gestión';
+  const style=doc.createElement('style');
+  style.textContent='body{background:linear-gradient(135deg,#eee9e4,#f8f5f2 52%,#ece7e2)!important}.top h1{letter-spacing:-.7px;margin-bottom:4px}.top h1+div{color:#6b6865!important;font-size:15px}#syncStatus{font-size:12px;padding:6px 10px;border-radius:999px;background:#fff;border:1px solid #ddd;color:#555}.status-pill{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:800}.status-pending{background:#fef3c7;color:#92400e}.status-ok{background:#dcfce7;color:#166534}.actions{display:flex;gap:6px;flex-wrap:wrap}.product-actions{white-space:nowrap}#productEditBox{margin-top:16px;background:#faf8f6}#productEditBox input[readonly]{background:#eee;color:#666;cursor:not-allowed}';
+  doc.head.appendChild(style);
+  const status=doc.createElement('span');status.id='syncStatus';status.textContent='Conectando…';doc.querySelector('.top')?.appendChild(status);
+  const bridge=doc.createElement('script');
+  bridge.textContent="(()=>{\n"+
+  "const SB_URL='https://rnjrblclthomnsvlbfhm.supabase.co';\n"+
+  "const SB_KEY='sb_publishable_npLQFSEwCZMr8mwVA_6tQA_CN-7uDhq';\n"+
+  "const ROW_ID='apres';\n"+
+  "const headers={apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'};\n"+
+  "let saveTimer=null,loading=false,editingCode=null,editingPhoto='';\n"+
+  "const syncEl=()=>document.getElementById('syncStatus');\n"+
+  "function setStatus(text,ok=true){const el=syncEl();if(!el)return;el.textContent=text;el.style.color=ok?'#166534':'#991b1b'}\n"+
+  "function migratePayments(){data.sales=(data.sales||[]).map(s=>{if(s.paymentStatus)return s;if(s.payment==='transferencia')return {...s,paymentStatus:'confirmado',confirmedAt:s.date,confirmationMethod:'migrado'};return {...s,paymentStatus:'confirmado',confirmedAt:s.date,confirmationMethod:'efectivo'}})}\n"+
+  "async function upload(){try{setStatus('Guardando…');const r=await fetch(SB_URL+'/rest/v1/app_state?id=eq.'+encodeURIComponent(ROW_ID),{method:'PATCH',headers:{...headers,Prefer:'return=minimal'},body:JSON.stringify({data,updated_at:new Date().toISOString()})});if(!r.ok)throw new Error(await r.text());setStatus('Guardado online')}catch(e){console.error(e);setStatus('Sin conexión',false)}}\n"+
+  "async function download(){if(loading)return;loading=true;try{setStatus('Sincronizando…');const r=await fetch(SB_URL+'/rest/v1/app_state?select=data&id=eq.'+encodeURIComponent(ROW_ID),{headers});if(!r.ok)throw new Error(await r.text());const rows=await r.json(),remote=rows&&rows[0]&&rows[0].data;if(remote&&Array.isArray(remote.products)){data={...D,...remote,cash:{...D.cash,...(remote.cash||{})}};migratePayments();localStorage.setItem(K,JSON.stringify(data));render();renderCart();setStatus('Sincronizado')}else await upload()}catch(e){console.error(e);setStatus('Modo local',false)}finally{loading=false}}\n"+
+  "const baseSave=save;save=function(){migratePayments();localStorage.setItem(K,JSON.stringify(data));render();clearTimeout(saveTimer);saveTimer=setTimeout(upload,350)};\n"+
+  "migratePayments();\n"+
+  "const baseTotals=totalsFor;totalsFor=function(date){const out=baseTotals(date);const ts=out.ts||[];out.transfer=ts.filter(s=>s.payment==='transferencia'&&s.paymentStatus==='confirmado').reduce((a,s)=>a+s.total,0);out.transferPending=ts.filter(s=>s.payment==='transferencia'&&s.paymentStatus!=='confirmado').reduce((a,s)=>a+s.total,0);return out};\n"+
+  "completeSale=function(){const day=getCash(today());if(!basket.length)return alert('Agregá prendas');if(!day.isOpen)return alert('Primero abrí la caja de hoy');for(const i of basket){const p=data.products.find(x=>x.code===i.code);if(!p||p.stock<i.qty)return alert('Stock insuficiente')}for(const i of basket)data.products.find(x=>x.code===i.code).stock-=i.qty;const payment=document.getElementById('payment').value,now=new Date().toISOString();data.sales.unshift({id:Date.now(),date:now,customer:document.getElementById('customer').value||'Consumidor final',payment,total:basket.reduce((a,x)=>a+x.price*x.qty,0),items:structuredClone(basket),paymentStatus:payment==='transferencia'?'pendiente':'confirmado',confirmedAt:payment==='efectivo'?now:null,confirmationMethod:payment==='efectivo'?'efectivo':null});basket=[];document.getElementById('customer').value='';save();renderCart();alert(payment==='transferencia'?'Venta registrada. Transferencia pendiente de confirmación.':'Venta registrada')};\n"+
+  "window.confirmTransfer=function(id){const s=data.sales.find(x=>x.id===id);if(!s||s.payment!=='transferencia')return;if(s.paymentStatus==='confirmado')return alert('Esta transferencia ya está confirmada.');if(!confirm('¿Confirmar que ingresó la transferencia de '+money(s.total)+'?'))return;s.paymentStatus='confirmado';s.confirmedAt=new Date().toISOString();s.confirmationMethod='manual';save();alert('Transferencia confirmada')};\n"+
+  "function ensureEditor(){if(document.getElementById('productEditBox'))return;const body=document.getElementById('products');if(!body)return;const table=body.closest('table');const head=table&&table.querySelector('thead tr');if(head&&!head.querySelector('[data-edit-head]')){const th=document.createElement('th');th.dataset.editHead='1';head.appendChild(th)}const box=document.createElement('div');box.id='productEditBox';box.className='card hide';box.innerHTML='<h3>Editar producto</h3><div class=\"row\"><div class=\"field\"><label>Código (fijo)</label><input id=\"editCode\" readonly></div><div class=\"field\" style=\"flex:1\"><label>Descripción</label><input id=\"editName\"></div><div class=\"field\"><label>Precio</label><input id=\"editPrice\" type=\"number\" min=\"0\"></div><div class=\"field\"><label>Stock</label><input id=\"editStock\" type=\"number\" min=\"0\"></div></div><br><div class=\"field\"><label>Colores separados por coma</label><input id=\"editColors\"></div><br><div class=\"field\"><label>Talles</label><select id=\"editSizes\" multiple size=\"6\"><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>XXXL</option></select></div><br><div class=\"field\"><label>Cambiar foto</label><input id=\"editPhotoInput\" type=\"file\" accept=\"image/*\"><img id=\"editPhotoPreview\" class=\"preview hide\"></div><br><div class=\"row\"><button class=\"btn primary\" id=\"saveProductEdit\">Guardar cambios</button><button class=\"btn ghost\" id=\"cancelProductEdit\">Cancelar</button></div>';table.parentElement.appendChild(box);document.getElementById('editPhotoInput').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;if(f.size>1200000){alert('La foto debe pesar menos de 1,2 MB');e.target.value='';return}const r=new FileReader();r.onload=()=>{editingPhoto=r.result;const img=document.getElementById('editPhotoPreview');img.src=editingPhoto;img.className='preview'};r.readAsDataURL(f)});document.getElementById('cancelProductEdit').onclick=()=>{editingCode=null;editingPhoto='';box.classList.add('hide')};document.getElementById('saveProductEdit').onclick=()=>{const p=data.products.find(x=>x.code===editingCode);if(!p)return alert('No se encontró el producto');const name=document.getElementById('editName').value.trim(),price=Number(document.getElementById('editPrice').value),stock=Number(document.getElementById('editStock').value),colors=document.getElementById('editColors').value.split(',').map(x=>x.trim()).filter(Boolean),sizes=[...document.getElementById('editSizes').selectedOptions].map(o=>o.value);if(!name||!Number.isFinite(price)||price<0||!Number.isFinite(stock)||stock<0||!colors.length||!sizes.length)return alert('Completá descripción, precio, stock, colores y talles');p.name=name;p.price=price;p.stock=stock;p.colors=colors;p.sizes=sizes;p.photo=editingPhoto;save();editingCode=null;editingPhoto='';box.classList.add('hide');alert('Producto actualizado')}}\n"+
+  "function openEditor(code){ensureEditor();const p=data.products.find(x=>x.code===code);if(!p)return;editingCode=code;editingPhoto=p.photo||'';document.getElementById('editCode').value=p.code;document.getElementById('editName').value=p.name;document.getElementById('editPrice').value=p.price;document.getElementById('editStock').value=p.stock;document.getElementById('editColors').value=(p.colors||[]).join(', ');[...document.getElementById('editSizes').options].forEach(o=>o.selected=(p.sizes||[]).includes(o.value));const img=document.getElementById('editPhotoPreview');if(editingPhoto){img.src=editingPhoto;img.className='preview'}else img.className='preview hide';document.getElementById('editPhotoInput').value='';const box=document.getElementById('productEditBox');box.classList.remove('hide');box.scrollIntoView({behavior:'smooth',block:'center'})}\n"+
+  "function decorateProducts(){ensureEditor();[...document.querySelectorAll('#products tr')].forEach((tr,i)=>{if(tr.querySelector('.product-actions'))return;const p=data.products[i];if(!p)return;const td=document.createElement('td');td.className='product-actions';const btn=document.createElement('button');btn.className='btn ghost';btn.textContent='Editar';btn.onclick=()=>openEditor(p.code);td.appendChild(btn);tr.appendChild(td)})}\n"+
+  "function decorateHistory(){const body=document.getElementById('history');if(!body)return;const date=document.getElementById('reportDate')?.value||today();const ts=data.sales.filter(s=>s.date.slice(0,10)===date);const editable=date===today();const head=body.closest('table')?.querySelector('thead tr');if(head&&head.children.length===6){const th=document.createElement('th');th.textContent='Estado';head.insertBefore(th,head.children[4])}body.innerHTML=ts.map(s=>{const pending=s.payment==='transferencia'&&s.paymentStatus!=='confirmado';const label=s.payment==='transferencia'?(pending?'<span class=\"status-pill status-pending\">Pendiente</span>':'<span class=\"status-pill status-ok\">Confirmada</span>'):'<span class=\"status-pill status-ok\">Cobrado</span>';const confirmed=s.confirmedAt?'<br><small>'+new Date(s.confirmedAt).toLocaleString('es-AR')+'</small>':'';const confirmBtn=pending?'<button class=\"btn primary\" onclick=\"confirmTransfer('+s.id+')\">Confirmar transferencia</button>':'';const deleteBtn=editable?'<button class=\"btn danger\" onclick=\"deleteSale('+s.id+')\">Eliminar</button>':'';return '<tr><td>'+new Date(s.date).toLocaleString('es-AR')+'</td><td>'+s.customer+'</td><td>'+s.items.map(i=>i.qty+'× '+i.code+' '+i.color+'/'+i.size).join(', ')+'</td><td>'+s.payment+'</td><td>'+label+confirmed+'</td><td>'+money(s.total)+'</td><td><div class=\"actions\">'+confirmBtn+deleteBtn+'</div></td></tr>'}).join('')||'<tr><td colspan=\"7\">Sin ventas en esta fecha</td></tr>'}\n"+
+  "const originalRender=render;render=function(){originalRender();decorateProducts();decorateHistory();const date=document.getElementById('reportDate')?.value||today();const t=totalsFor(date);const el=document.getElementById('kpTransfer');if(el)el.title=t.transferPending?'Pendiente: '+money(t.transferPending):''};\n"+
+  "render();renderCart();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')download()});window.addEventListener('focus',download);download();\n"+
+  "})();";
+  doc.body.appendChild(bridge);
+ }catch(e){console.error('No se pudo inicializar la aplicación',e)}
 });
 </script>
 </body>
