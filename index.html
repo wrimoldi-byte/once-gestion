@@ -19,7 +19,7 @@ html,body{margin:0;min-height:100%;background:linear-gradient(135deg,#eee9e4,#f8
 </style>
 </head>
 <body>
-<iframe id="app" class="app-frame" src="version-4.html?v=exportaciones-1" title="Après Studio — Sistema de gestión"></iframe>
+<iframe id="app" class="app-frame" src="version-4.html?v=exportaciones-2" title="Après Studio — Sistema de gestión"></iframe>
 <section class="guide" aria-labelledby="guideTitle">
   <div class="guide-card">
     <h2 id="guideTitle">Cómo usar el sistema</h2>
@@ -30,7 +30,7 @@ html,body{margin:0;min-height:100%;background:linear-gradient(135deg,#eee9e4,#f8
       <article class="step"><span class="step-number">3</span><h3>Registrar ventas</h3><p>En <b>Nueva venta</b>, buscá el producto por código, elegí color, talle y cantidad, agregalo al detalle y seleccioná la forma de pago.</p></article>
       <article class="step"><span class="step-number">4</span><h3>Controlar y cerrar</h3><p>Revisá <b>Panel</b> e <b>Historial</b>. Al terminar, cargá los gastos y el efectivo contado en <b>Caja</b>, y cerrá el día.</p></article>
     </div>
-    <div class="tip"><b>Importante:</b> las ventas por transferencia quedan pendientes hasta que se confirme el ingreso desde la solapa <b>Historial</b>. Los botones de descarga generan archivos CSV que se abren directamente con Excel.</div>
+    <div class="tip"><b>Importante:</b> las ventas por transferencia quedan pendientes hasta que se confirme el ingreso desde la solapa <b>Historial</b>. La solapa <b>Descargar datos</b> genera archivos CSV que se abren directamente con Excel.</div>
   </div>
 </section>
 <script>
@@ -43,8 +43,8 @@ frame.addEventListener('load',()=>{
     style.textContent=`
       .tab-help{background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(242,237,232,.92));border:1px solid rgba(0,0,0,.08);border-left:5px solid #1a1a1a;border-radius:16px;padding:14px 16px;margin-bottom:16px;box-shadow:0 8px 20px rgba(0,0,0,.035)}
       .tab-help h3{margin:0 0 5px;font-size:16px}.tab-help p{margin:0;color:#625d59;font-size:14px;line-height:1.48}.tab-help b{color:#1a1a1a}
-      .export-box{background:rgba(255,255,255,.86);border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:15px 16px;margin:0 0 16px;box-shadow:0 8px 20px rgba(0,0,0,.035)}
-      .export-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}.export-head h3{margin:0;font-size:16px}.export-head small{line-height:1.35}
+      .export-box{background:rgba(255,255,255,.86);border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:18px;box-shadow:0 8px 20px rgba(0,0,0,.035)}
+      .export-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}.export-head h3{margin:0 0 5px;font-size:20px}.export-head small{line-height:1.35}
       .export-actions{display:flex;gap:8px;flex-wrap:wrap}.export-actions .btn{padding:10px 13px}
     `;
     doc.head.appendChild(style);
@@ -64,17 +64,33 @@ frame.addEventListener('load',()=>{
       section.prepend(box);
     });
 
-    const exportBox=doc.createElement('div');
-    exportBox.className='export-box';
-    exportBox.innerHTML=`
-      <div class="export-head"><div><h3>Descargar datos para Excel</h3><small>Los archivos se descargan en formato CSV compatible con Excel.</small></div></div>
-      <div class="export-actions">
-        <button class="btn ghost" id="exportProducts">Productos</button>
-        <button class="btn ghost" id="exportDaySales">Ventas del día</button>
-        <button class="btn primary" id="exportAllSales">Ventas acumuladas</button>
-      </div>`;
     const tabs=doc.querySelector('.tabs');
-    if(tabs)tabs.insertAdjacentElement('afterend',exportBox);
+    const app=doc.querySelector('.app');
+    if(tabs&&app){
+      const downloadTab=doc.createElement('button');
+      downloadTab.dataset.tab='descargas';
+      downloadTab.textContent='Descargar datos';
+      tabs.appendChild(downloadTab);
+
+      const downloadSection=doc.createElement('section');
+      downloadSection.id='descargas';
+      downloadSection.className='hide';
+      downloadSection.innerHTML=`
+        <div class="export-box">
+          <div class="export-head"><div><h3>Descargar datos para Excel</h3><small>Elegí qué información querés descargar. Los archivos CSV son compatibles con Excel.</small></div></div>
+          <div class="export-actions">
+            <button class="btn ghost" id="exportProducts">Productos</button>
+            <button class="btn ghost" id="exportDaySales">Ventas del día</button>
+            <button class="btn primary" id="exportAllSales">Ventas acumuladas</button>
+          </div>
+        </div>`;
+      app.appendChild(downloadSection);
+
+      downloadTab.addEventListener('click',()=>{
+        doc.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b===downloadTab));
+        doc.querySelectorAll('.app > section').forEach(s=>s.classList.toggle('hide',s.id!=='descargas'));
+      });
+    }
 
     const exportScript=doc.createElement('script');
     exportScript.textContent=`
